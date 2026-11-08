@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bandit Cheatsheet</title>
+<style>
+:root{--bg:#f3f5f1;--fg:#1c2420;--mut:#5b665f;--card:#fff;--line:#cfd6cf;--acc:#1f6f54;--code:#e8eee8;--codefg:#12301f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101512;--fg:#e4ebe5;--mut:#98a59c;--card:#18201b;--line:#2b362f;--acc:#5fd3a0;--code:#0b100d;--codefg:#b8f0d2}}
+:root[data-theme="dark"]{--bg:#101512;--fg:#e4ebe5;--mut:#98a59c;--card:#18201b;--line:#2b362f;--acc:#5fd3a0;--code:#0b100d;--codefg:#b8f0d2}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 "Source Serif 4",Georgia,serif}
+main{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+h1{font:700 2.2rem/1.15 "Courier New",monospace;margin:0 0 6px}
+.sub{color:var(--mut);margin:0 0 22px}
+input{width:100%;padding:12px 14px;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+input:focus-visible{outline:2px solid var(--acc)}
+section{margin-top:30px}
+h2{font:700 1.25rem "Courier New",monospace;color:var(--acc);margin:0 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:10px 0}
+.row p{margin:6px 0 0;color:var(--mut);font-size:.95rem}
+pre{margin:0;padding:10px 12px;background:var(--code);color:var(--codefg);border-radius:6px;overflow-x:auto;font:.92rem/1.5 "Courier New",monospace;position:relative}
+button{position:absolute;right:6px;top:6px;font:.75rem sans-serif;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:5px;padding:2px 8px;cursor:pointer}
+button:focus-visible{outline:2px solid var(--acc)}
+.hide{display:none}
+.tip{border-left:4px solid var(--acc);padding:8px 14px;background:var(--card);margin:12px 0;border-radius:0 8px 8px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Bandit cheatsheet</h1>
+<p class="sub">Commands for OverTheWire Bandit: <code>ssh bandit0@bandit.labs.overthewire.org -p 2220</code>. Always read the level goal first, then pick a tool below.</p>
+<input id="q" type="search" placeholder="Filter commands (try: hidden, space, find, base64)" aria-label="Filter commands">
+<div id="list"></div>
+<div class="tip">Stuck? Run <code>man &lt;command&gt;</code> or <code>&lt;command&gt; --help</code>. Press <b>Tab</b> to autocomplete odd filenames.</div>
+</main>
+<script>
+var D=[
+["Connecting & basics",[
+["ssh bandit1@bandit.labs.overthewire.org -p 2220","Log in. Port is 2220. Paste the password when asked (it won't show as you type)."],
+["ls -la","List everything including hidden files, with permissions and sizes."],
+["pwd; cd /path; cd ..; cd ~","Show where you are, move, go up one level, go home."],
+["cat file","Print a file."],
+["file ./*","Check what type each file is (ASCII text, data, etc.) before you cat it."],
+["exit","Leave the server."]]],
+["Hidden files",[
+["ls -a","Files starting with a dot are hidden. -a shows them."],
+["cat .hidden","Read a hidden file. Add ./ if the name is odd: cat ./.hidden"],
+["find . -name \".*\"","Find hidden files in the current folder tree."]]],
+["Files with spaces",[
+["cat \"spaces in this filename\"","Wrap the name in quotes."],
+["cat spaces\\ in\\ this\\ filename","Or escape each space with a backslash."],
+["cat spaces*","Or Tab-complete / use a wildcard."]]],
+["Files starting with a dash",[
+["cat ./-","Prefix with ./ so the shell does not read the name as an option."],
+["cat -- -filename","The -- means 'no more options after this'."],
+["cat /full/path/-filename","Full path also works."],
+["cat < -","Redirect input from the file."]]],
+["Finding files",[
+["find / -type f -size 1033c 2>/dev/null","Find files by exact size (c = bytes, k = KB). 2>/dev/null hides permission errors."],
+["find / -user bandit7 -group bandit6 2>/dev/null","Find by owner and group."],
+["find . -type f ! -executable","Files that are not executable."],
+["find . -type f -size 1033c ! -executable","Combine conditions (size and not executable)."],
+["find / -perm -4000 2>/dev/null","Find SUID binaries."],
+["find / -name \"*.password\" 2>/dev/null","Search by name pattern."],
+["du -a | sort -n","See file sizes in a tree."]]],
+["Searching inside text",[
+["grep millionth data.txt","Print lines containing a word."],
+["grep -i word file","Ignore case."],
+["grep -r word /dir","Search recursively through a folder."],
+["grep -n word file","Show line numbers."],
+["strings data.bin | grep ==","Pull readable text out of a binary file, then filter."],
+["sort data.txt | uniq -u","Show the one line that appears only once (sort first, uniq needs sorted input)."],
+["sort | uniq -c","Count how often each line appears."],
+["diff passwords.old passwords.new","Show lines that differ between two files."]]],
+["Decoding & conversion",[
+["base64 -d data.txt","Decode Base64."],
+["cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'","ROT13 decode."],
+["xxd -r data.txt > out.bin","Turn a hex dump back into binary."],
+["file out.bin","Identify the result: gzip, bzip2, tar, and so on."],
+["gzip -d file.gz","Decompress gzip (file needs a .gz name first: mv file file.gz)."],
+["bzip2 -d file.bz2","Decompress bzip2."],
+["tar xf file.tar","Extract a tar archive."],
+["tar tf file.tar","List the contents without extracting."]]],
+["Working in /tmp",[
+["mktemp -d","Make a private temp folder. You can't write in your home folder in later levels."],
+["cd $(mktemp -d)","Make and enter it."],
+["cp ~/data.txt /tmp/mydir/","Copy the file there before you edit or extract."],
+["chmod 700 /tmp/mydir","Keep your folder private from other players."],
+["mv file newname","Rename a file (needed before gzip -d)."]]],
+["Networking",[
+["nc localhost 30000","Connect to a port with netcat. Type or pipe the password in."],
+["echo PASSWORD | nc localhost 30000","Send the password to a port."],
+["openssl s_client -connect localhost:30001 -quiet","Connect to an SSL port."],
+["nmap -p 31000-32000 localhost","Scan a port range for open ports."],
+["nmap -sV -p 31046,31518 localhost","Check which open ports run a service."],
+["ss -tulpn","List listening ports."]]],
+["SSH keys & jumping between levels",[
+["ssh -i sshkey.private bandit14@localhost -p 2220","Log in with a private key file."],
+["chmod 600 sshkey.private","Keys must not be readable by others, or ssh refuses to use them."],
+["scp -P 2220 bandit0@bandit.labs.overthewire.org:data.txt .","Copy a file to your own machine."],
+["ssh bandit18@bandit.labs.overthewire.org -p 2220 cat readme","Run one command on login without an interactive shell."]]],
+["Cron, scripts & processes",[
+["ls /etc/cron.d/","See scheduled jobs."],
+["cat /etc/cron.d/cronjob_banditX","Read what a cron job runs."],
+["cat /usr/bin/cronjob_bandit22.sh","Then read the script it calls."],
+["echo $(whoami)","Show your user name. Scripts often use it to build file names."],
+["echo I am user bandit23 | md5sum | cut -d ' ' -f 1","Reproduce a script's hash step."],
+["ps aux","List running processes."]]],
+["Shell tricks",[
+["command1 | command2","Pipe output of one command into the next."],
+["command > file","Save output to a file (overwrites)."],
+["command >> file","Append output to a file."],
+["command 2>/dev/null","Throw away error messages."],
+["cut -d ' ' -f 2","Take column 2 split on spaces."],
+["head -n 5; tail -n 5","First or last lines."],
+["wc -l file","Count lines."],
+["ln -s /etc/bandit_pass/bandit25 link","Create a symbolic link."],
+["Ctrl+R","Search command history."],
+["history","Show past commands."]]],
+["Password locations",[
+["cat /etc/bandit_pass/bandit<N>","Password for level N. Only readable by that user, so you often get at it by exploiting a setuid binary or script."],
+["./bandit20-do cat /etc/bandit_pass/bandit20","Run a setuid helper as the next user."]]]
+];
+var list=document.getElementById('list');
+function render(f){
+ f=(f||'').toLowerCase();var out='';
+ D.forEach(function(s){
+  var rows=s[1].filter(function(r){return !f||(r[0]+' '+r[1]+' '+s[0]).toLowerCase().indexOf(f)>-1});
+  if(!rows.length)return;
+  out+='<section><h2>'+esc(s[0])+'</h2>';
+  rows.forEach(function(r){out+='<div class="row"><pre><code>'+esc(r[0])+'</code><button data-c="'+esc(r[0]).replace(/"/g,'&quot;')+'">Copy</button></pre><p>'+esc(r[1])+'</p></div>'});
+  out+='</section>';
+ });
+ list.innerHTML=out||'<p>No matches.</p>';
+}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+list.addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;
+ var t=b.getAttribute('data-c');var d=document.createElement('textarea');d.innerHTML=t;
+ try{navigator.clipboard.writeText(d.value);b.textContent='Copied'}catch(x){b.textContent='Select + copy'}
+ setTimeout(function(){b.textContent='Copy'},1200);
+});
+document.getElementById('q').addEventListener('input',function(e){render(e.target.value)});
+render('');
+</script>
+</body>
+</html>
